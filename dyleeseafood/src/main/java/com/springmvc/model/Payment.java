@@ -12,15 +12,15 @@ public class Payment {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public int getOrderId() { return orderId; }
-    public void setOrderId(int orderId) { this.orderId = orderId; }
+    public void setOrderId(int v) { this.orderId = v; }
     public String getMethod() { return method; }
-    public void setMethod(String method) { this.method = method; }
+    public void setMethod(String v) { this.method = v; }
     public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setStatus(String v) { this.status = v; }
     public double getAmount() { return amount; }
-    public void setAmount(double amount) { this.amount = amount; }
+    public void setAmount(double v) { this.amount = v; }
     public String getTransactionId() { return transactionId; }
-    public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
+    public void setTransactionId(String v) { this.transactionId = v; }
     public String getPaidAt() { return paidAt; }
-    public void setPaidAt(String paidAt) { this.paidAt = paidAt; }
+    public void setPaidAt(String v) { this.paidAt = v; }
 }

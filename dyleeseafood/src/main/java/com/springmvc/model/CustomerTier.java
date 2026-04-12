@@ -9,9 +9,9 @@ public class CustomerTier {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setName(String v) { this.name = v; }
     public double getDiscountPercent() { return discountPercent; }
-    public void setDiscountPercent(double d) { this.discountPercent = d; }
+    public void setDiscountPercent(double v) { this.discountPercent = v; }
     public double getMinSpent() { return minSpent; }
-    public void setMinSpent(double m) { this.minSpent = m; }
+    public void setMinSpent(double v) { this.minSpent = v; }
 }

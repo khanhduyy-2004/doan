@@ -14,19 +14,19 @@ public class Address {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public int getCustomerId() { return customerId; }
-    public void setCustomerId(int customerId) { this.customerId = customerId; }
+    public void setCustomerId(int v) { this.customerId = v; }
     public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setFullName(String v) { this.fullName = v; }
     public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public void setPhone(String v) { this.phone = v; }
     public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public void setAddress(String v) { this.address = v; }
     public String getWard() { return ward; }
-    public void setWard(String ward) { this.ward = ward; }
+    public void setWard(String v) { this.ward = v; }
     public String getDistrict() { return district; }
-    public void setDistrict(String district) { this.district = district; }
+    public void setDistrict(String v) { this.district = v; }
     public String getCity() { return city; }
-    public void setCity(String city) { this.city = city; }
+    public void setCity(String v) { this.city = v; }
     public boolean isDefault() { return isDefault; }
-    public void setDefault(boolean isDefault) { this.isDefault = isDefault; }
+    public void setDefault(boolean v) { this.isDefault = v; }
 }

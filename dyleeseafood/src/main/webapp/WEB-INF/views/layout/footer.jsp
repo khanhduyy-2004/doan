@@ -1,31 +1,94 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<footer class="mt-5 py-4">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-4 mb-3">
-        <h5>🐟 Dylee Seafood</h5>
-        <p class="text-white-50">Hải sản tươi sống, giao tận nhà. Chất lượng đảm bảo, giá cả hợp lý.</p>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<footer class="py-4 mt-5" style="background:#023e8a;">
+  <div class="container" style="max-width:1200px;">
+    <div class="row g-4">
+
+      <!-- Logo + mô tả -->
+      <div class="col-md-4">
+        <h5 class="text-white fw-bold mb-2">
+          🐟 Dylee Seafood
+        </h5>
+        <p style="color:rgba(255,255,255,0.6);
+                  font-size:13px; line-height:1.6;">
+          Hải sản tươi sống, giao tận nhà.
+          Chất lượng đảm bảo, giá cả hợp lý.
+        </p>
+        <div class="d-flex gap-2 mt-2">
+          <span style="background:rgba(255,255,255,0.1);
+                       border-radius:6px; padding:6px 10px;
+                       color:rgba(255,255,255,0.7);
+                       font-size:12px;">
+            <i class="bi bi-shield-check"></i> Uy tín
+          </span>
+          <span style="background:rgba(255,255,255,0.1);
+                       border-radius:6px; padding:6px 10px;
+                       color:rgba(255,255,255,0.7);
+                       font-size:12px;">
+            <i class="bi bi-truck"></i> Nhanh chóng
+          </span>
+        </div>
       </div>
-      <div class="col-md-4 mb-3">
-        <h6>Liên hệ</h6>
-        <p class="text-white-50 mb-1"><i class="bi bi-telephone"></i> 0123 456 789</p>
-        <p class="text-white-50 mb-1"><i class="bi bi-envelope"></i> dylee@seafood.vn</p>
-        <p class="text-white-50"><i class="bi bi-geo-alt"></i> Hải Phòng, Việt Nam</p>
+
+      <!-- Liên hệ -->
+      <div class="col-md-4">
+        <h6 class="text-white fw-bold mb-3">Liên hệ</h6>
+        <div style="color:rgba(255,255,255,0.7);font-size:13px;">
+          <div class="mb-2">
+            <i class="bi bi-telephone me-2"></i>0123 456 789
+          </div>
+          <div class="mb-2">
+            <i class="bi bi-envelope me-2"></i>dylee@seafood.vn
+          </div>
+          <div>
+            <i class="bi bi-geo-alt me-2"></i>Hải Phòng, Việt Nam
+          </div>
+        </div>
       </div>
-      <div class="col-md-4 mb-3">
-        <h6>Danh mục</h6>
-        <ul class="list-unstyled text-white-50">
-          <li><a href="/dyleeseafood/products?category=1" class="text-white-50 text-decoration-none">Tôm</a></li>
-          <li><a href="/dyleeseafood/products?category=2" class="text-white-50 text-decoration-none">Cua & Ghẹ</a></li>
-          <li><a href="/dyleeseafood/products?category=3" class="text-white-50 text-decoration-none">Cá Hải Sản</a></li>
-          <li><a href="/dyleeseafood/products?category=4" class="text-white-50 text-decoration-none">Ốc & Ngao</a></li>
-        </ul>
+
+      <!-- Danh mục -->
+      <div class="col-md-4">
+        <h6 class="text-white fw-bold mb-3">Danh mục</h6>
+        <div style="column-count:2; column-gap:16px;">
+          <c:forEach var="cat" items="${categories}">
+            <div class="mb-1">
+              <a href="/dyleeseafood/products?category=${cat.id}"
+                 style="color:rgba(255,255,255,0.6);
+                        text-decoration:none;
+                        font-size:13px;
+                        transition:0.15s;"
+                 onmouseover="this.style.color='white'"
+                 onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+                <i class="bi ${cat.icon} me-1"
+                   style="font-size:11px;"></i>
+                ${cat.name}
+              </a>
+            </div>
+          </c:forEach>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Đường kẻ -->
+    <hr style="border-color:rgba(255,255,255,0.15);margin:16px 0 12px;">
+
+    <!-- Copyright -->
+    <div class="d-flex justify-content-between align-items-center">
+      <p class="mb-0"
+         style="color:rgba(255,255,255,0.4);font-size:12px;">
+        © 2026 Dylee Seafood. All rights reserved.
+      </p>
+      <div style="color:rgba(255,255,255,0.4);font-size:12px;">
+        <i class="bi bi-heart-fill text-danger"
+           style="font-size:10px;"></i>
+        Made with Spring MVC
       </div>
     </div>
-    <hr class="border-secondary">
-    <p class="text-center text-white-50 mb-0">© 2026 Dylee Seafood. All rights reserved.</p>
+
   </div>
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

@@ -4,9 +4,13 @@ import com.springmvc.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 @Repository
 public class UserDao {
@@ -14,32 +18,51 @@ public class UserDao {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private RowMapper<User> rowMapper = new RowMapper<User>() {
-        public User mapRow(ResultSet rs, int rowNum) throws SQLException {
+    private RowMapper<User> rowMapper =
+        new RowMapper<User>() {
+        public User mapRow(ResultSet rs, int row)
+                throws SQLException {
             User u = new User();
             u.setId(rs.getInt("id"));
             u.setUsername(rs.getString("username"));
             u.setPassword(rs.getString("password"));
             u.setRoleId(rs.getInt("role_id"));
             u.setActive(rs.getInt("is_active") == 1);
-            u.setCreatedAt(rs.getString("created_at"));
             return u;
         }
     };
 
+    // Tìm theo username → dùng khi login
     public User findByUsername(String username) {
         try {
             return jdbcTemplate.queryForObject(
                 "SELECT * FROM users WHERE username = ?",
                 rowMapper, username);
-        } catch (Exception e) {
-            return null;
-        }
+        } catch (Exception e) { return null; }
     }
 
-    public void save(User user) {
+    // Lưu user mới → trả về ID
+    public int saveAndGetId(User u) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO users " +
+                "(username, password, role_id, is_active) " +
+                "VALUES (?, ?, ?, 1)",
+                Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, u.getUsername());
+            ps.setString(2, u.getPassword());
+            ps.setInt(3, u.getRoleId());
+            return ps;
+        }, keyHolder);
+        return keyHolder.getKey().intValue();
+    }
+
+    // Khóa / Mở khóa tài khoản theo user_id
+    public void toggleActive(int userId) {
         jdbcTemplate.update(
-            "INSERT INTO users (username, password, role_id) VALUES (?,?,?)",
-            user.getUsername(), user.getPassword(), 3); // role 3 = Customer
+            "UPDATE users SET is_active = " +
+            "CASE WHEN is_active = 1 THEN 0 ELSE 1 END " +
+            "WHERE id = ?", userId);
     }
 }

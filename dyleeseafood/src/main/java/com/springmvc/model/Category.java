@@ -11,13 +11,13 @@ public class Category {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setName(String v) { this.name = v; }
     public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void setDescription(String v) { this.description = v; }
     public String getIcon() { return icon; }
-    public void setIcon(String icon) { this.icon = icon; }
+    public void setIcon(String v) { this.icon = v; }
     public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public void setImageUrl(String v) { this.imageUrl = v; }
     public int getSortOrder() { return sortOrder; }
-    public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
+    public void setSortOrder(int v) { this.sortOrder = v; }
 }

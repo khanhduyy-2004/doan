@@ -1,6 +1,9 @@
 package com.springmvc.model;
 
+import java.util.List;
+
 public class Order {
+    // Bảng orders
     private int id;
     private int customerId;
     private int addressId;
@@ -10,26 +13,39 @@ public class Order {
     private double shippingFee;
     private double total;
     private String note;
+
+    // JOIN fields
     private String customerName;
+    private String customerPhone;
+    private String paymentMethod;
+
+    // Extra
+    private List<OrderItem> items;
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public int getCustomerId() { return customerId; }
-    public void setCustomerId(int customerId) { this.customerId = customerId; }
+    public void setCustomerId(int v) { this.customerId = v; }
     public int getAddressId() { return addressId; }
-    public void setAddressId(int addressId) { this.addressId = addressId; }
+    public void setAddressId(int v) { this.addressId = v; }
     public String getOrderDate() { return orderDate; }
-    public void setOrderDate(String orderDate) { this.orderDate = orderDate; }
+    public void setOrderDate(String v) { this.orderDate = v; }
     public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setStatus(String v) { this.status = v; }
     public double getSubtotal() { return subtotal; }
-    public void setSubtotal(double subtotal) { this.subtotal = subtotal; }
+    public void setSubtotal(double v) { this.subtotal = v; }
     public double getShippingFee() { return shippingFee; }
-    public void setShippingFee(double shippingFee) { this.shippingFee = shippingFee; }
+    public void setShippingFee(double v) { this.shippingFee = v; }
     public double getTotal() { return total; }
-    public void setTotal(double total) { this.total = total; }
+    public void setTotal(double v) { this.total = v; }
     public String getNote() { return note; }
-    public void setNote(String note) { this.note = note; }
+    public void setNote(String v) { this.note = v; }
     public String getCustomerName() { return customerName; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public void setCustomerName(String v) { this.customerName = v; }
+    public String getCustomerPhone() { return customerPhone; }
+    public void setCustomerPhone(String v) { this.customerPhone = v; }
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String v) { this.paymentMethod = v; }
+    public List<OrderItem> getItems() { return items; }
+    public void setItems(List<OrderItem> v) { this.items = v; }
 }
