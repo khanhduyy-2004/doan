@@ -1,9 +1,11 @@
 package com.springmvc.controller;
 
+import com.springmvc.dao.AddressDao;
 import com.springmvc.dao.CategoryDao;
 import com.springmvc.dao.CustomerDao;
 import com.springmvc.dao.OrderDao;
 import com.springmvc.dao.ProductDao;
+import com.springmvc.model.Address;
 import com.springmvc.model.CartItem;
 import com.springmvc.model.Customer;
 import com.springmvc.model.Order;
@@ -13,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import javax.servlet.http.HttpSession;
 import java.util.List;
 
@@ -20,201 +24,195 @@ import java.util.List;
 @RequestMapping("/order")
 public class OrderController {
 
-    @Autowired private OrderDao orderDao;
-    @Autowired private CustomerDao customerDao;
-    @Autowired private ProductDao productDao;
-    @Autowired private CategoryDao categoryDao;
+    @Autowired private OrderDao     orderDao;
+    @Autowired private CustomerDao  customerDao;
+    @Autowired private ProductDao   productDao;
+    @Autowired private CategoryDao  categoryDao;
+    @Autowired private AddressDao   addressDao;
 
-    // ===== TRANG CHECKOUT =====
+    // ═══ CHECKOUT ═══
     @GetMapping("/checkout")
-    public String checkout(HttpSession session,
-                           Model model) {
-        User user = (User)
-            session.getAttribute("loggedUser");
+    public String checkout(HttpSession session, Model model) {
+        User user = (User) session.getAttribute("loggedUser");
         if (user == null) return "redirect:/login";
 
-        List<CartItem> cart = (List<CartItem>)
-            session.getAttribute("cart");
-        if (cart == null || cart.isEmpty())
-            return "redirect:/cart";
+        List<CartItem> cart = (List<CartItem>) session.getAttribute("cart");
+        if (cart == null || cart.isEmpty()) return "redirect:/cart";
 
-        // LẤY THÔNG TIN CUSTOMER ← ĐÃ THÊM
-        Customer customer =
-            customerDao.findByUserId(user.getId());
-        model.addAttribute("customer", customer);
+        Customer customer = customerDao.findByUserId(user.getId());
+        double subtotal = 0;
+        for (CartItem item : cart) subtotal += item.getTotalPrice();
 
-        double total = 0;
-        for (CartItem item : cart)
-            total += item.getTotalPrice();
+        // Chiết khấu theo hạng thành viên
+        double discountPct = customerDao.getDiscountPercent(customer.getTierId());
+        double discount    = subtotal * discountPct / 100.0;
+        double total       = subtotal - discount;
 
-        model.addAttribute("cart", cart);
-        model.addAttribute("total", total);
-        model.addAttribute("categories",
-                           categoryDao.findAll());
+        model.addAttribute("customer",     customer);
+        model.addAttribute("cart",         cart);
+        model.addAttribute("subtotal",     subtotal);
+        model.addAttribute("discountPct",  discountPct);
+        model.addAttribute("discount",     discount);
+        model.addAttribute("total",        total);
+        model.addAttribute("savedAddresses", addressDao.findByCustomerId(customer.getId()));
+        model.addAttribute("categories",   categoryDao.findAll());
         return "order/checkout";
     }
 
-    // ===== ĐẶT HÀNG =====
+    // ═══ ĐẶT HÀNG ═══
     @PostMapping("/place")
     public String placeOrder(
-            @RequestParam String fullName,
-            @RequestParam String phone,
-            @RequestParam String address,
-            @RequestParam(required=false,
-                          defaultValue="")
-                String ward,
-            @RequestParam(required=false,
-                          defaultValue="")
-                String district,
-            @RequestParam String city,
+            @RequestParam(required = false) Integer savedAddressId,
+            @RequestParam(required = false) String fullName,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false, defaultValue = "") String ward,
+            @RequestParam(required = false, defaultValue = "") String district,
+            @RequestParam(required = false) String city,
             @RequestParam String paymentMethod,
-            @RequestParam(required=false) String note,
+            @RequestParam(required = false) String note,
             HttpSession session, Model model) {
 
-        User user = (User)
-            session.getAttribute("loggedUser");
+        User user = (User) session.getAttribute("loggedUser");
         if (user == null) return "redirect:/login";
 
-        List<CartItem> cart = (List<CartItem>)
-            session.getAttribute("cart");
-        if (cart == null || cart.isEmpty())
-            return "redirect:/cart";
+        List<CartItem> cart = (List<CartItem>) session.getAttribute("cart");
+        if (cart == null || cart.isEmpty()) return "redirect:/cart";
 
         try {
-            Customer customer =
-                customerDao.findByUserId(user.getId());
+            Customer customer = customerDao.findByUserId(user.getId());
 
-            double total = 0;
-            for (CartItem item : cart)
-                total += item.getTotalPrice();
+            double subtotal = 0;
+            for (CartItem item : cart) subtotal += item.getTotalPrice();
 
-            int addressId = orderDao.saveAddress(
-                fullName, phone, address,
-                ward, district, city,
-                customer.getId());
+            // Chiết khấu VIP
+            double discountPct = customerDao.getDiscountPercent(customer.getTierId());
+            double discount    = subtotal * discountPct / 100.0;
+            double total       = subtotal - discount;
 
-            int orderId = orderDao.createOrder(
-                customer.getId(), addressId,
-                total, total, note);
-
-            for (CartItem item : cart) {
-                orderDao.addOrderItem(
-                    orderId,
-                    item.getProductId(),
-                    item.getQuantity(),
-                    item.getPrice());
+            // Địa chỉ: dùng địa chỉ đã lưu hoặc nhập mới
+            int addressId;
+            if (savedAddressId != null && savedAddressId > 0) {
+                addressId = savedAddressId;
+            } else {
+                addressId = orderDao.saveAddress(
+                    fullName, phone, address, ward, district, city, customer.getId());
             }
 
-            orderDao.createPayment(
-                orderId, paymentMethod, total);
+            int orderId = orderDao.createOrder(
+                customer.getId(), addressId, subtotal, total, note);
 
+            for (CartItem item : cart)
+                orderDao.addOrderItem(orderId, item.getProductId(),
+                                      item.getQuantity(), item.getPrice());
+
+            orderDao.createPayment(orderId, paymentMethod, total);
             session.removeAttribute("cart");
             return "redirect:/order/success/" + orderId;
 
         } catch (Exception e) {
-            // Trả lại trang checkout với lỗi
-            Customer customer =
-                customerDao.findByUserId(user.getId());
-            double total = 0;
-            for (CartItem item : cart)
-                total += item.getTotalPrice();
-            model.addAttribute("customer", customer);
-            model.addAttribute("cart", cart);
-            model.addAttribute("total", total);
-            model.addAttribute("categories",
-                               categoryDao.findAll());
-            model.addAttribute("error",
-                "Có lỗi xảy ra: " + e.getMessage());
+            Customer customer = customerDao.findByUserId(user.getId());
+            double subtotal = 0;
+            for (CartItem item : cart) subtotal += item.getTotalPrice();
+            double discountPct = customerDao.getDiscountPercent(customer.getTierId());
+            double discount    = subtotal * discountPct / 100.0;
+            model.addAttribute("customer",      customer);
+            model.addAttribute("cart",          cart);
+            model.addAttribute("subtotal",      subtotal);
+            model.addAttribute("discountPct",   discountPct);
+            model.addAttribute("discount",      discount);
+            model.addAttribute("total",         subtotal - discount);
+            model.addAttribute("savedAddresses",addressDao.findByCustomerId(customer.getId()));
+            model.addAttribute("categories",    categoryDao.findAll());
+            model.addAttribute("error",         "Có lỗi xảy ra: " + e.getMessage());
             return "order/checkout";
         }
     }
 
-    // ===== TRANG THÀNH CÔNG =====
+    // ═══ THÀNH CÔNG ═══
     @GetMapping("/success/{orderId}")
     public String success(@PathVariable int orderId,
-                          HttpSession session,
-                          Model model) {
-        User user = (User)
-            session.getAttribute("loggedUser");
+                          HttpSession session, Model model) {
+        User user = (User) session.getAttribute("loggedUser");
         if (user == null) return "redirect:/login";
 
-        Order order = orderDao.findById(orderId);
-        List<OrderItem> items =
-            orderDao.findItems(orderId);
-
-        model.addAttribute("order", order);
-        model.addAttribute("items", items);
-        model.addAttribute("categories",
-                           categoryDao.findAll());
+        model.addAttribute("order",      orderDao.findById(orderId));
+        model.addAttribute("items",      orderDao.findItems(orderId));
+        model.addAttribute("categories", categoryDao.findAll());
         return "order/success";
     }
 
-    // ===== LỊCH SỬ MUA HÀNG =====
+    // ═══ LỊCH SỬ ═══
     @GetMapping("/history")
     public String history(
-            @RequestParam(required=false) String status,
+            @RequestParam(required = false) String status,
             HttpSession session, Model model) {
-
-        User user = (User)
-            session.getAttribute("loggedUser");
+        User user = (User) session.getAttribute("loggedUser");
         if (user == null) return "redirect:/login";
 
-        Customer customer =
-            customerDao.findByUserId(user.getId());
+        Customer customer = customerDao.findByUserId(user.getId());
         if (customer == null) return "redirect:/home";
 
-        List<Order> orders;
-        if (status != null && !status.isEmpty()) {
-            orders = orderDao.findByCustomerAndStatus(
-                customer.getId(), status);
-        } else {
-            orders = orderDao.findByCustomerId(
-                customer.getId());
-        }
+        List<Order> orders = (status != null && !status.isEmpty())
+            ? orderDao.findByCustomerAndStatus(customer.getId(), status)
+            : orderDao.findByCustomerId(customer.getId());
 
-        for (Order order : orders) {
-            order.setItems(
-                orderDao.findItems(order.getId()));
-        }
+        for (Order order : orders)
+            order.setItems(orderDao.findItems(order.getId()));
 
-        model.addAttribute("orders", orders);
+        model.addAttribute("orders",       orders);
         model.addAttribute("statusFilter", status);
-        model.addAttribute("categories",
-                           categoryDao.findAll());
+        model.addAttribute("categories",   categoryDao.findAll());
         return "order/history";
     }
 
-    // ===== THEO DÕI ĐƠN HÀNG =====
+    // ═══ THEO DÕI ═══
     @GetMapping("/tracking/{orderId}")
-    public String tracking(
-            @PathVariable int orderId,
-            HttpSession session, Model model) {
-
-        User user = (User)
-            session.getAttribute("loggedUser");
+    public String tracking(@PathVariable int orderId,
+                           HttpSession session, Model model) {
+        User user = (User) session.getAttribute("loggedUser");
         if (user == null) return "redirect:/login";
 
         Order order = orderDao.findById(orderId);
-        if (order == null)
-            return "redirect:/order/history";
+        if (order == null) return "redirect:/order/history";
 
         if (user.getRoleId() == 3) {
-            Customer customer =
-                customerDao.findByUserId(user.getId());
-            if (customer != null
-                && order.getCustomerId()
-                   != customer.getId()) {
+            Customer customer = customerDao.findByUserId(user.getId());
+            if (customer != null && order.getCustomerId() != customer.getId())
                 return "redirect:/order/history";
-            }
         }
 
-        List<OrderItem> items =
-            orderDao.findItems(orderId);
-
-        model.addAttribute("order", order);
-        model.addAttribute("items", items);
-        model.addAttribute("categories",
-                           categoryDao.findAll());
+        model.addAttribute("order",      order);
+        model.addAttribute("items",      orderDao.findItems(orderId));
+        model.addAttribute("categories", categoryDao.findAll());
         return "order/tracking";
+    }
+
+    // ═══ HỦY ĐƠN ═══
+    @PostMapping("/cancel/{id}")
+    public String cancelOrder(@PathVariable int id,
+                              HttpSession session,
+                              RedirectAttributes ra) {
+        User user = (User) session.getAttribute("loggedUser");
+        if (user == null) return "redirect:/login";
+
+        Order order = orderDao.findById(id);
+        if (order == null) {
+            ra.addFlashAttribute("cancelError", "Không tìm thấy đơn hàng.");
+            return "redirect:/order/history";
+        }
+        Customer customer = customerDao.findByUserId(user.getId());
+        if (customer == null || order.getCustomerId() != customer.getId()) {
+            ra.addFlashAttribute("cancelError", "Bạn không có quyền hủy đơn này.");
+            return "redirect:/order/history";
+        }
+        if (!"Pending".equals(order.getStatus())) {
+            ra.addFlashAttribute("cancelError",
+                "Không thể hủy đơn ở trạng thái \"" + order.getStatus() + "\".");
+            return "redirect:/order/tracking/" + id;
+        }
+        orderDao.updateStatus(id, "Cancelled");
+        ra.addFlashAttribute("cancelSuccess", "Đơn hàng #DL" + id + " đã được hủy thành công.");
+        return "redirect:/order/history";
     }
 }

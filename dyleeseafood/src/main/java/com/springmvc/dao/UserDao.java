@@ -41,13 +41,24 @@ public class UserDao {
         } catch (Exception e) { return null; }
     }
 
+    // Tìm theo ID
+    public User findById(int id) {
+        try {
+            return jdbcTemplate.queryForObject(
+                "SELECT * FROM users WHERE id = ?",
+                rowMapper, id);
+        } catch (Exception e) { return null; }
+    }
+
     // Lưu user mới → trả về ID
     public int saveAndGetId(User u) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(
+            PreparedStatement ps =
+                connection.prepareStatement(
                 "INSERT INTO users " +
-                "(username, password, role_id, is_active) " +
+                "(username, password, " +
+                " role_id, is_active) " +
                 "VALUES (?, ?, ?, 1)",
                 Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, u.getUsername());
@@ -58,11 +69,21 @@ public class UserDao {
         return keyHolder.getKey().intValue();
     }
 
-    // Khóa / Mở khóa tài khoản theo user_id
+    // Đổi mật khẩu — nhận password đã hash BCrypt
+    public void updatePassword(int userId,
+                                String hashedPassword) {
+        jdbcTemplate.update(
+            "UPDATE users SET password = ? " +
+            "WHERE id = ?",
+            hashedPassword, userId);
+    }
+
+    // Khóa / Mở khóa tài khoản
     public void toggleActive(int userId) {
         jdbcTemplate.update(
             "UPDATE users SET is_active = " +
-            "CASE WHEN is_active = 1 THEN 0 ELSE 1 END " +
+            "CASE WHEN is_active = 1 " +
+            "     THEN 0 ELSE 1 END " +
             "WHERE id = ?", userId);
     }
 }

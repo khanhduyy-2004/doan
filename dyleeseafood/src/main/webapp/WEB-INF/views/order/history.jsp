@@ -63,6 +63,43 @@
   .filter-tab:hover, .filter-tab.active {
     background:#023e8a; color:white; border-color:#023e8a;
   }
+  /* Nút hủy đơn */
+  .btn-cancel-order {
+    background: #fff0f0;
+    color: #dc2626;
+    border: 1.5px solid #fca5a5;
+    border-radius: 8px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-cancel-order:hover {
+    background: #dc2626;
+    color: white;
+    border-color: #dc2626;
+  }
+  /* Toast thông báo */
+  .toast-noti {
+    position: fixed; bottom: 24px; right: 24px;
+    padding: 14px 20px; border-radius: 12px;
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 10px;
+    min-width: 260px; z-index: 9999;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    animation: slideIn .3s ease;
+  }
+  .toast-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .toast-error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  @keyframes slideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
   @keyframes pulse {
     0%, 100% { opacity:1; }
     50% { opacity:0.4; }
@@ -227,6 +264,11 @@
              ${statusFilter=='Cancelled'?'active':''}">
           ❌ Đã hủy
         </a>
+        <a href="/dyleeseafood/order/history?status=Refunded"
+           class="filter-tab
+             ${statusFilter=='Refunded'?'active':''}">
+          💰 Hoàn tiền
+        </a>
       </div>
 
       <!-- Danh sách đơn hàng -->
@@ -320,12 +362,28 @@
                         </span>Đã hủy
                       </span>
                     </c:when>
+                    <c:when test="${order.status=='Refunded'}">
+                      <span class="status-badge"
+                            style="background:#f3e8ff;
+                                   color:#7c3aed;">
+                        <span class="status-dot"
+                              style="background:#7c3aed;">
+                        </span>Hoàn tiền
+                      </span>
+                    </c:when>
                   </c:choose>
                   <a href="/dyleeseafood/order/tracking/${order.id}"
                      class="btn btn-sm btn-outline-primary"
                      style="font-size:12px;border-radius:8px;">
                     <i class="bi bi-geo-alt"></i> Theo dõi
                   </a>
+                  <c:if test="${order.status=='Pending'}">
+                    <button type="button"
+                            class="btn-cancel-order"
+                            onclick="confirmCancel(${order.id})">
+                      <i class="bi bi-x-circle"></i> Hủy đơn
+                    </button>
+                  </c:if>
                 </div>
               </div>
 
@@ -405,5 +463,71 @@
     </div>
   </div>
 </div>
+
+<!-- TOAST THÔNG BÁO -->
+<c:if test="${not empty cancelSuccess}">
+  <div class="toast-noti toast-success" id="toastMsg">
+    <i class="bi bi-check-circle-fill"></i>
+    ${cancelSuccess}
+  </div>
+</c:if>
+<c:if test="${not empty cancelError}">
+  <div class="toast-noti toast-error" id="toastMsg">
+    <i class="bi bi-exclamation-circle-fill"></i>
+    ${cancelError}
+  </div>
+</c:if>
+
+<!-- MODAL XÁC NHẬN HỦY -->
+<div id="cancelModal" style="
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.45); backdrop-filter:blur(2px);
+    z-index:9998; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:16px; width:100%;
+              max-width:380px; padding:28px 24px;
+              box-shadow:0 20px 60px rgba(0,0,0,.2); text-align:center;">
+    <i class="bi bi-x-circle-fill" style="font-size:3rem;color:#fca5a5;"></i>
+    <h5 class="fw-bold mt-3 mb-2" style="color:#0f172a;">Xác nhận hủy đơn?</h5>
+    <p style="font-size:13px;color:#64748b;margin-bottom:20px;">
+      Đơn hàng <strong id="cancelOrderId"></strong> sẽ bị hủy.<br>
+      Hành động này không thể hoàn tác.
+    </p>
+    <form id="cancelForm" method="post">
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button type="button"
+                onclick="closeCancelModal()"
+                style="background:#f1f5f9;color:#475569;border:1px solid #e5eaf2;
+                       border-radius:9px;padding:10px 22px;font-size:13px;
+                       font-weight:600;cursor:pointer;">
+          Giữ đơn
+        </button>
+        <button type="submit"
+                style="background:#dc2626;color:white;border:none;
+                       border-radius:9px;padding:10px 22px;font-size:13px;
+                       font-weight:600;cursor:pointer;">
+          <i class="bi bi-x-circle me-1"></i>Xác nhận hủy
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function confirmCancel(orderId) {
+  document.getElementById('cancelOrderId').textContent = '#DL' + orderId;
+  document.getElementById('cancelForm').action =
+    '/dyleeseafood/order/cancel/' + orderId;
+  document.getElementById('cancelModal').style.display = 'flex';
+}
+function closeCancelModal() {
+  document.getElementById('cancelModal').style.display = 'none';
+}
+document.getElementById('cancelModal').addEventListener('click', function(e) {
+  if (e.target === this) closeCancelModal();
+});
+// Tự ẩn toast sau 4 giây
+var toast = document.getElementById('toastMsg');
+if (toast) setTimeout(function(){ toast.style.opacity='0'; toast.style.transition='opacity .5s'; }, 4000);
+</script>
 
 <%@ include file="/WEB-INF/views/layout/footer.jsp" %>

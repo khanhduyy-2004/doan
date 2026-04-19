@@ -476,7 +476,7 @@
       </div>
 
       <!-- Nút -->
-      <div class="d-flex gap-2">
+      <div class="d-flex gap-2 flex-wrap">
         <a href="/dyleeseafood/order/history"
            class="btn btn-outline-secondary flex-fill">
           <i class="bi bi-arrow-left"></i> Quay lại
@@ -485,10 +485,73 @@
            class="btn btn-primary flex-fill">
           <i class="bi bi-bag-plus"></i> Mua thêm
         </a>
+        <c:if test="${order.status=='Pending'}">
+          <button type="button"
+                  onclick="document.getElementById('cancelBox').style.display='flex'"
+                  class="btn flex-fill"
+                  style="background:#fff0f0;color:#dc2626;border:1.5px solid #fca5a5;font-weight:600;">
+            <i class="bi bi-x-circle me-1"></i>Hủy đơn
+          </button>
+        </c:if>
       </div>
 
     </div>
   </div>
 </div>
+
+
+<!-- TOAST -->
+<c:if test="${not empty cancelError}">
+<div style="position:fixed;bottom:24px;right:24px;background:#fef2f2;
+            color:#dc2626;border:1px solid #fecaca;border-radius:12px;
+            padding:14px 20px;font-size:13px;font-weight:600;
+            display:flex;align-items:center;gap:10px;min-width:260px;
+            z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.1);"
+     id="errToast">
+  <i class="bi bi-exclamation-circle-fill"></i>${cancelError}
+</div>
+<script>setTimeout(function(){var t=document.getElementById('errToast');if(t){t.style.opacity='0';t.style.transition='opacity .5s';}},4000);</script>
+</c:if>
+
+<!-- MODAL XÁC NHẬN HỦY -->
+<div id="cancelBox" style="
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.45); backdrop-filter:blur(2px);
+    z-index:9998; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:16px; width:100%;
+              max-width:380px; padding:28px 24px;
+              box-shadow:0 20px 60px rgba(0,0,0,.2); text-align:center;">
+    <i class="bi bi-x-circle-fill" style="font-size:3rem;color:#fca5a5;"></i>
+    <h5 class="fw-bold mt-3 mb-2" style="color:#0f172a;">Xác nhận hủy đơn?</h5>
+    <p style="font-size:13px;color:#64748b;margin-bottom:4px;">
+      Đơn hàng <strong style="color:#0077b6;">#DL${order.id}</strong>
+    </p>
+    <p style="font-size:12px;color:#94a3b8;margin-bottom:20px;">
+      Hành động này không thể hoàn tác.
+    </p>
+    <form method="post" action="/dyleeseafood/order/cancel/${order.id}">
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button type="button"
+                onclick="document.getElementById('cancelBox').style.display='none'"
+                style="background:#f1f5f9;color:#475569;border:1px solid #e5eaf2;
+                       border-radius:9px;padding:10px 22px;font-size:13px;
+                       font-weight:600;cursor:pointer;">
+          Giữ đơn
+        </button>
+        <button type="submit"
+                style="background:#dc2626;color:white;border:none;
+                       border-radius:9px;padding:10px 22px;font-size:13px;
+                       font-weight:600;cursor:pointer;">
+          <i class="bi bi-x-circle me-1"></i>Xác nhận hủy
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+document.getElementById('cancelBox').addEventListener('click', function(e){
+  if(e.target===this) this.style.display='none';
+});
+</script>
 
 <%@ include file="/WEB-INF/views/layout/footer.jsp" %>

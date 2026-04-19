@@ -1,2 +1,4 @@
 eclipse.preferences.version=1
+encoding//src/main/webapp/WEB-INF/views/admin/dashboard.jsp=UTF-8
 encoding//src/main/webapp/WEB-INF/views/admin/staff.jsp=UTF-8
+encoding//src/main/webapp/WEB-INF/views/admin/suppliers.jsp=UTF-8
